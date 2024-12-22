@@ -1,10 +1,14 @@
 package com.hexaware.librarymanagement.service;
 
 import com.hexaware.librarymanagement.dto.BorrowedBookDTO;
+import com.hexaware.librarymanagement.entity.Book;
 import com.hexaware.librarymanagement.entity.BorrowedBook;
+import com.hexaware.librarymanagement.entity.User;
 import com.hexaware.librarymanagement.exception.CRUDAPIException;
 import com.hexaware.librarymanagement.mapper.BorrowedBookMapper;
 import com.hexaware.librarymanagement.repository.BorrowedBookRepository;
+import com.hexaware.librarymanagement.repository.UserRepository;
+import com.hexaware.librarymanagement.repository.BookRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -12,6 +16,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -21,14 +26,32 @@ public class BorrowedBookServiceImpl implements IBorrowedBookService {
     @Autowired
     private BorrowedBookRepository borrowedBookRepository;
 
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private BookRepository bookRepository;
+
     @Override
     public BorrowedBookDTO borrowBook(BorrowedBookDTO borrowedBookDTO) {
-        if (borrowedBookDTO.getDueDate() == null) {
-            throw new CRUDAPIException(HttpStatus.BAD_REQUEST, "Validation Error", "Due date is required for borrowing a book.");
-        }
+        User user = userRepository.findById(borrowedBookDTO.getUserId())
+                .orElseThrow(() -> new CRUDAPIException(HttpStatus.NOT_FOUND, "User not found", "User with ID " + borrowedBookDTO.getUserId() + " not found"));
 
+        // Fetch Book entity by ID
+        Book book = bookRepository.findById(borrowedBookDTO.getBookId())
+                .orElseThrow(() -> new CRUDAPIException(HttpStatus.NOT_FOUND, "Book not found", "Book with ID " + borrowedBookDTO.getBookId() + " not found"));
+
+        // Map BorrowedBookDTO to BorrowedBook entity (without fetching User and Book)
         BorrowedBook borrowedBook = BorrowedBookMapper.mapToBorrowedBook(borrowedBookDTO);
+
+        // Set User and Book entities to BorrowedBook
+        borrowedBook.setUser(user);
+        borrowedBook.setBook(book);
+
+        // Save the BorrowedBook entity
         BorrowedBook savedBorrowedBook = borrowedBookRepository.save(borrowedBook);
+
+        // Return the mapped BorrowedBookDTO
         return BorrowedBookMapper.mapToBorrowedBookDTO(savedBorrowedBook);
     }
 
@@ -62,10 +85,40 @@ public class BorrowedBookServiceImpl implements IBorrowedBookService {
         return BorrowedBookMapper.mapToBorrowedBookDTO(borrowedBook);
     }
 
-    private void calculateFine(BorrowedBook borrowedBook) {
-        // Validate due date
+    @Override
+    public double returnBook(int borrowId) {
+        // Find the borrowed record based on borrowId
+        BorrowedBook borrowedBook = borrowedBookRepository.findById(borrowId)
+                .orElseThrow(() -> new CRUDAPIException(HttpStatus.NOT_FOUND,
+                        "Borrowed record not found for Borrow ID: " + borrowId));
+
+        // Set the return date to the current date
+        borrowedBook.setReturnDate(new Date());
+
+        // Calculate the fine based on the return date
+        double fine = calculateFine(borrowedBook);
+
+        // Set the calculated fine
+        borrowedBook.setFine(fine);
+
+        // Save the updated record
+        borrowedBookRepository.save(borrowedBook);
+
+        // Now delete the record as per your original requirement
+        borrowedBookRepository.delete(borrowedBook);
+
+        // Return the calculated fine
+        return fine;
+    }
+
+    public double calculateFine(BorrowedBook borrowedBook) {
+        // Validate that the due date is present
         if (borrowedBook.getDueDate() == null) {
-            throw new CRUDAPIException(HttpStatus.BAD_REQUEST, "Validation Error", "Due date is missing for Borrowed Book ID: " + borrowedBook.getBorrowId());
+            throw new CRUDAPIException(
+                    HttpStatus.BAD_REQUEST,
+                    "Validation Error",
+                    "Due date is missing for Borrowed Book ID: " + borrowedBook.getBorrowId()
+            );
         }
 
         // Convert `Date` to `LocalDate`
@@ -74,18 +127,20 @@ public class BorrowedBookServiceImpl implements IBorrowedBookService {
                 .toLocalDate();
         LocalDate today = LocalDate.now();
 
-        // Calculate the gap between due date and today
-        long borrowedToDueGap = ChronoUnit.DAYS.between(dueDate, today);
+        // Calculate the days overdue
+        long overdueDays = ChronoUnit.DAYS.between(dueDate, today);
 
-        // Apply fine logic
-        if (borrowedToDueGap > 10) {
-            double fine = (borrowedToDueGap - 10) * 5; // Rs. 5 per day after 10 days
-            borrowedBook.setFine(fine);
-        } else {
-            borrowedBook.setFine(0);
-        }
+        // Fine logic: Rs. 5 per day after 10 days overdue
+        double fine = overdueDays > 10 ? (overdueDays - 10) * 5 : 0;
 
-        // Save the updated fine in the database
+        // Update the fine in the borrowed book entity
+        borrowedBook.setFine(fine);
+
+        // Save the updated fine to the database
         borrowedBookRepository.save(borrowedBook);
+
+        // Return the calculated fine
+        return fine;
     }
+
 }

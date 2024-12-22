@@ -4,6 +4,8 @@ import com.hexaware.librarymanagement.dto.BorrowedBookDTO;
 import com.hexaware.librarymanagement.entity.BorrowedBook;
 import com.hexaware.librarymanagement.entity.Book;
 import com.hexaware.librarymanagement.entity.User;
+import com.hexaware.librarymanagement.exception.CRUDAPIException;
+import org.springframework.http.HttpStatus;
 
 public class BorrowedBookMapper {
 
@@ -12,17 +14,6 @@ public class BorrowedBookMapper {
         BorrowedBook borrowedBook = new BorrowedBook();
 
         borrowedBook.setBorrowId(dto.getBorrowId());
-
-        // Create and set User entity with userId
-        User user = new User();
-        user.setId(dto.getUserId());
-        borrowedBook.setUser(user);
-
-        // Create and set Book entity with bookId
-        Book book = new Book();
-        book.setBookId(dto.getBookId());
-        borrowedBook.setBook(book);
-
         borrowedBook.setBorrowedDate(dto.getBorrowedDate());
         borrowedBook.setDueDate(dto.getDueDate());
         borrowedBook.setReturnDate(dto.getReturnDate());

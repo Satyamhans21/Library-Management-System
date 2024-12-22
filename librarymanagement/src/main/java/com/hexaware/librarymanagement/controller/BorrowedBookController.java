@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/borrowed-books")
@@ -53,6 +54,21 @@ public class BorrowedBookController {
 
         BorrowedBookDTO savedBorrowedBook = borrowedBookService.borrowBook(borrowedBookDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(savedBorrowedBook);
+    }
+
+    @PostMapping("/return")
+    public ResponseEntity<String> returnBook(@RequestBody Map<String, Integer> requestBody) {
+        int borrowId = requestBody.get("borrowId");
+        // Call the service method to return the book
+        double fine = borrowedBookService.returnBook(borrowId);
+
+        // Prepare the response message
+        String message = fine > 0
+                ? "Book returned successfully. Fine applied: Rs. " + fine
+                : "Book returned successfully. No fine applied.";
+
+        // Return the response
+        return ResponseEntity.ok(message);
     }
 
     @GetMapping

@@ -13,12 +13,22 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/books")
+@RequestMapping("/api/v1/books")
 @CrossOrigin("http://localhost:3000")
 public class BookController {
 
     @Autowired
     private IBookService bookService;
+
+    @GetMapping
+    public ResponseEntity<List<BookDTO>> getAllBooks() {
+        // Fetch all books as a list of BookDTO
+        List<BookDTO> books = bookService.getAllBooks();
+        if (books.isEmpty()) {
+            throw new CRUDAPIException(HttpStatus.NOT_FOUND, "No books found in the system.");
+        }
+        return ResponseEntity.ok(books);
+    }
 
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     @PostMapping("/add")
@@ -31,15 +41,7 @@ public class BookController {
         return ResponseEntity.status(HttpStatus.CREATED).body(savedBook);
     }
 
-    @GetMapping
-    public ResponseEntity<List<BookDTO>> getAllBooks() {
-        // Fetch all books as a list of BookDTO
-        List<BookDTO> books = bookService.getAllBooks();
-        if (books.isEmpty()) {
-            throw new CRUDAPIException(HttpStatus.NOT_FOUND, "No books found in the system.");
-        }
-        return ResponseEntity.ok(books);
-    }
+
 
     @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_USER')")
     @GetMapping("/{bookId}")
