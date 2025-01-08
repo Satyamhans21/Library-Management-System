@@ -57,7 +57,7 @@ public class SecurityConfig {
                                 .requestMatchers("/static/**", "/css/**", "/js/**", "/images/**").permitAll() // Static resources
                                 .anyRequest().authenticated() // Other routes require authentication
                 )
-                .exceptionHandling(exception ->
+                 .exceptionHandling(exception ->
                         exception.authenticationEntryPoint(authenticationEntryPoint) // Handle unauthenticated access
                 )
                 .sessionManagement(session ->

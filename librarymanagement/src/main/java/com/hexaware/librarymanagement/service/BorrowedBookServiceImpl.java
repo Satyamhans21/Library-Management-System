@@ -104,15 +104,15 @@ public class BorrowedBookServiceImpl implements IBorrowedBookService {
         // Save the updated record
         borrowedBookRepository.save(borrowedBook);
 
-        // Now delete the record as per your original requirement
-        borrowedBookRepository.delete(borrowedBook);
+        // Do NOT delete the record from the database
+        // The record remains with updated fine and return date
 
         // Return the calculated fine
         return fine;
     }
 
     public double calculateFine(BorrowedBook borrowedBook) {
-        // Validate that the due date is present
+        // Ensure the due date is present
         if (borrowedBook.getDueDate() == null) {
             throw new CRUDAPIException(
                     HttpStatus.BAD_REQUEST,
@@ -125,19 +125,15 @@ public class BorrowedBookServiceImpl implements IBorrowedBookService {
         LocalDate dueDate = borrowedBook.getDueDate().toInstant()
                 .atZone(ZoneId.systemDefault())
                 .toLocalDate();
-        LocalDate today = LocalDate.now();
+        LocalDate returnDate = borrowedBook.getReturnDate().toInstant()
+                .atZone(ZoneId.systemDefault())
+                .toLocalDate();
 
         // Calculate the days overdue
-        long overdueDays = ChronoUnit.DAYS.between(dueDate, today);
+        long overdueDays = ChronoUnit.DAYS.between(dueDate, returnDate);
 
         // Fine logic: Rs. 5 per day after 10 days overdue
         double fine = overdueDays > 10 ? (overdueDays - 10) * 5 : 0;
-
-        // Update the fine in the borrowed book entity
-        borrowedBook.setFine(fine);
-
-        // Save the updated fine to the database
-        borrowedBookRepository.save(borrowedBook);
 
         // Return the calculated fine
         return fine;
