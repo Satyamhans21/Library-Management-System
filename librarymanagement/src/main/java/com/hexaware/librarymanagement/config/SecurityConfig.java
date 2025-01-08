@@ -11,10 +11,17 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import com.hexaware.librarymanagement.security.JwtAuthenticationEntryPoint;
 import com.hexaware.librarymanagement.security.JwtAuthenticationFilter;
 
+
 import java.util.List; // Import List
+
+import java.util.Arrays;
+
 
 @Configuration
 @EnableMethodSecurity
@@ -62,11 +69,24 @@ public class SecurityConfig {
                 )
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS) // Stateless session management
-                );
-
-        // Add JWT Authentication Filter before the UsernamePasswordAuthenticationFilter
-        httpSecurity.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                )
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .cors(cors -> cors.configurationSource(corsConfigurationSource())); // Apply CORS configuration
 
         return httpSecurity.build();
+    }
+
+    // Define CORS configuration
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration corsConfiguration = new CorsConfiguration();
+        corsConfiguration.setAllowedOrigins(Arrays.asList("http://localhost:3000")); // Allow React app on localhost
+        corsConfiguration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS")); // Allowed HTTP methods
+        corsConfiguration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type")); // Allowed headers
+        corsConfiguration.setAllowCredentials(true); // Allow credentials (cookies, etc.)
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", corsConfiguration); // Apply CORS config to all routes
+        return source;
     }
 }

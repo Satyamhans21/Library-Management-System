@@ -1,7 +1,6 @@
 package com.hexaware.librarymanagement.controller;
 
 import com.hexaware.librarymanagement.dto.BookDTO;
-import com.hexaware.librarymanagement.entity.Book;
 import com.hexaware.librarymanagement.exception.CRUDAPIException;
 import com.hexaware.librarymanagement.service.IBookService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,12 +12,16 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
+
 @RequestMapping("/api/v1/books")
 @CrossOrigin("http://localhost:3000")
+//@CrossOrigin("http://localhost:3000")
+
 public class BookController {
 
     @Autowired
     private IBookService bookService;
+
 
     @GetMapping
     public ResponseEntity<List<BookDTO>> getAllBooks() {
@@ -30,7 +33,7 @@ public class BookController {
         return ResponseEntity.ok(books);
     }
 
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_USER')")
     @PostMapping("/add")
     public ResponseEntity<BookDTO> addBook(@RequestBody BookDTO bookDTO) {
         if (bookDTO.getTitle() == null || bookDTO.getTitle().trim().isEmpty()) {
@@ -87,7 +90,7 @@ public class BookController {
         return ResponseEntity.ok(books);
     }
 
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_USER')")
     @PutMapping("/update/{bookId}")
     public ResponseEntity<BookDTO> updateBook(@PathVariable int bookId, @RequestBody BookDTO bookDTO) {
         if (bookId <= 0) {
@@ -101,7 +104,7 @@ public class BookController {
         return ResponseEntity.ok(updatedBook);
     }
 
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_USER')")
     @DeleteMapping("/delete/{bookId}")
     public ResponseEntity<String> deleteBook(@PathVariable int bookId) {
         if (bookId <= 0) {

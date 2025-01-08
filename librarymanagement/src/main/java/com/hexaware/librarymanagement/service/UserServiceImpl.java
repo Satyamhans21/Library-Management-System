@@ -60,5 +60,13 @@ public class UserServiceImpl implements IUserService {
                 .map(UserMapper::mapToUserDTO)
                 .toList();
     }
+
+    @Override
+    public User findByUsername(String username) {
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new CRUDAPIException(HttpStatus.NOT_FOUND,
+                        "User Not Found",
+                        "No user found with username: " + username));
+    }
 }
 

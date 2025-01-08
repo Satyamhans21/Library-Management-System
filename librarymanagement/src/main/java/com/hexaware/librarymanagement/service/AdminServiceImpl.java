@@ -19,10 +19,10 @@ import java.util.Optional;
 import java.util.List;
 import java.util.stream.Collectors;
 
-
 @Service
 public class AdminServiceImpl implements IAdminService {
 
+    // Injecting required repositories for database interactions
     @Autowired
     private AdminRepository adminRepository;
 
@@ -30,9 +30,15 @@ public class AdminServiceImpl implements IAdminService {
     private AdminNotificationRepository adminNotificationRepository;
 
     @Autowired
-    private UserRepository userRepository;  // Repository to fetch users
-    // Method to send a notification from an admin to a user
+    private UserRepository userRepository;
 
+    /**
+     * Adds a new admin to the system.
+     * Validates the required fields before saving.
+     *
+     * @param adminDTO the admin data transfer object containing admin details.
+     * @return the saved admin details as AdminDTO.
+     */
     @Override
     public AdminDTO addAdmin(AdminDTO adminDTO) {
         if (adminDTO.getEmail() == null || adminDTO.getAdminName() == null) {
@@ -48,6 +54,11 @@ public class AdminServiceImpl implements IAdminService {
         return AdminMapper.mapToAdminDTO(savedAdmin);
     }
 
+    /**
+     * Retrieves a list of all admins in the system.
+     *
+     * @return list of all AdminDTOs.
+     */
     @Override
     public List<AdminDTO> getAllAdmins() {
         List<Admin> admins = adminRepository.findAll();
@@ -62,6 +73,12 @@ public class AdminServiceImpl implements IAdminService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Retrieves details of an admin by their ID.
+     *
+     * @param id the ID of the admin to retrieve.
+     * @return the admin details as AdminDTO.
+     */
     @Override
     public AdminDTO getAdminById(int id) {
         Optional<Admin> admin = adminRepository.findById(id);
@@ -72,6 +89,11 @@ public class AdminServiceImpl implements IAdminService {
         return AdminMapper.mapToAdminDTO(admin.get());
     }
 
+    /**
+     * Deletes an admin from the system by their ID.
+     *
+     * @param id the ID of the admin to delete.
+     */
     @Override
     public void deleteAdminById(int id) {
         if (!adminRepository.existsById(id)) {
@@ -81,6 +103,14 @@ public class AdminServiceImpl implements IAdminService {
         adminRepository.deleteById(id);
     }
 
+    /**
+     * Sends a notification from an admin to a user.
+     *
+     * @param adminId  the ID of the admin sending the notification.
+     * @param userId   the ID of the user receiving the notification.
+     * @param message  the message content.
+     * @return the saved notification as AdminNotificationDTO.
+     */
     public AdminNotificationDTO sendNotificationToUser(int adminId, int userId, String message) {
         Admin admin = adminRepository.findById(adminId)
                 .orElseThrow(() -> new CRUDAPIException(HttpStatus.NOT_FOUND, "Admin Not Found",
@@ -103,7 +133,12 @@ public class AdminServiceImpl implements IAdminService {
         return AdminMapper.mapToAdminNotificationDTO(savedNotification);
     }
 
-    // Method to get all notifications sent by a specific admin
+    /**
+     * Retrieves all notifications sent by a specific admin.
+     *
+     * @param adminId the ID of the admin.
+     * @return list of AdminNotificationDTOs sent by the admin.
+     */
     public List<AdminNotificationDTO> getNotificationsByAdmin(int adminId) {
         Admin admin = adminRepository.findById(adminId)
                 .orElseThrow(() -> new CRUDAPIException(HttpStatus.NOT_FOUND, "Admin Not Found",
@@ -120,7 +155,12 @@ public class AdminServiceImpl implements IAdminService {
                 .collect(Collectors.toList());
     }
 
-    // Method to get all notifications received by a specific user
+    /**
+     * Retrieves all notifications received by a specific user.
+     *
+     * @param userId the ID of the user.
+     * @return list of AdminNotificationDTOs received by the user.
+     */
     public List<AdminNotificationDTO> getNotificationsByUser(int userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CRUDAPIException(HttpStatus.NOT_FOUND, "User Not Found",
@@ -137,7 +177,11 @@ public class AdminServiceImpl implements IAdminService {
                 .collect(Collectors.toList());
     }
 
-    // Method to delete a notification
+    /**
+     * Deletes a specific notification by its ID.
+     *
+     * @param notificationId the ID of the notification to delete.
+     */
     public void deleteNotification(int notificationId) {
         AdminNotification notification = adminNotificationRepository.findById(notificationId)
                 .orElseThrow(() -> new CRUDAPIException(HttpStatus.NOT_FOUND, "Notification Not Found",
@@ -146,7 +190,12 @@ public class AdminServiceImpl implements IAdminService {
         adminNotificationRepository.delete(notification);
     }
 
-    // Method to get details of a specific notification
+    /**
+     * Retrieves the details of a specific notification by its ID.
+     *
+     * @param notificationId the ID of the notification.
+     * @return the notification details as AdminNotificationDTO.
+     */
     public AdminNotificationDTO getNotificationDetails(int notificationId) {
         AdminNotification notification = adminNotificationRepository.findById(notificationId)
                 .orElseThrow(() -> new CRUDAPIException(HttpStatus.NOT_FOUND, "Notification Not Found",

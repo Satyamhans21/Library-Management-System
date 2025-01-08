@@ -1,5 +1,7 @@
 package com.hexaware.librarymanagement.service;
 
+// Import necessary packages and classes
+
 import com.hexaware.librarymanagement.dto.*;
 import com.hexaware.librarymanagement.entity.Admin;
 import com.hexaware.librarymanagement.entity.Role;
@@ -24,9 +26,13 @@ import org.springframework.stereotype.Service;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * AuthServiceImpl provides authentication and registration functionalities
+ * for Users and Admins. It implements the IAuthService interface.
+ */
 @Service
 @Slf4j
-public class AuthServiceImpl implements IAuthService{
+public class AuthServiceImpl implements IAuthService {
 
     private AuthenticationManager authenticationManager;
     private UserRepository userRepository;
@@ -35,6 +41,7 @@ public class AuthServiceImpl implements IAuthService{
     private PasswordEncoder passwordEncoder;
     private JwtTokenProvider jwtTokenProvider;
 
+    // Constructor injection for dependencies
     @Autowired
     public AuthServiceImpl(AuthenticationManager authenticationManager,
                            UserRepository userRepository, RoleRepository roleRepository, AdminRepository adminRepository, PasswordEncoder passwordEncoder,
@@ -47,6 +54,12 @@ public class AuthServiceImpl implements IAuthService{
         this.jwtTokenProvider = jwtTokenProvider;
     }
 
+    /**
+     * Authenticates a user or admin based on the provided login credentials.
+     *
+     * @param dto Login details (username and password).
+     * @return JWTAuthResponse containing the JWT token and user/admin details.
+     */
     @Override
     public JWTAuthResponse authenticateUser(LoginDTO dto) {
         // Authenticate the credentials (common for both User and Admin)
@@ -82,7 +95,7 @@ public class AuthServiceImpl implements IAuthService{
         return new JWTAuthResponse(token, null, adminDto);
     }
 
-    // Helper method for mapping User to UserDTO
+    // Helper method for mapping User entity to UserDTO
     private UserDTO mapToUserDTO(User user) {
         UserDTO userDto = new UserDTO();
         userDto.setName(user.getName());
@@ -103,7 +116,7 @@ public class AuthServiceImpl implements IAuthService{
         return userDto;
     }
 
-    // Helper method for mapping Admin to AdminDTO
+    // Helper method for mapping Admin entity to AdminDTO
     private AdminDTO mapToAdminDTO(Admin admin) {
         AdminDTO adminDto = new AdminDTO();
         adminDto.setAdminId(admin.getAdminId());
@@ -117,6 +130,12 @@ public class AuthServiceImpl implements IAuthService{
         return adminDto;
     }
 
+    /**
+     * Registers a new user in the system.
+     *
+     * @param dto Registration details of the user.
+     * @return Success message if registration is successful.
+     */
     @Override
     @Transactional
     public String register(RegisterDTO dto) {
@@ -172,6 +191,12 @@ public class AuthServiceImpl implements IAuthService{
         return "Registration Successful!";
     }
 
+    /**
+     * Registers a new admin in the system.
+     *
+     * @param adminDTO Registration details of the admin.
+     * @return Success message if registration is successful.
+     */
     @Override
     public String registerAdmin(AdminDTO adminDTO) {
         if (adminRepository.existsByEmail(adminDTO.getEmail())) {
